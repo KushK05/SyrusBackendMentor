@@ -116,6 +116,15 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
+app.get("/", (_req, res) => {
+  res.json({
+    ok: true,
+    message: "Syrus mentor backend running",
+    health: "/health",
+    mentorRequests: "/api/mentor-requests"
+  });
+});
+
 app.get("/health", (_req, res) => {
   res.json({ ok: true, botReady });
 });
