@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: syrus-mentor-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DISCORD_BOT_TOKEN
+        sync: false
+      - key: DISCORD_GENERAL_CHANNEL_ID
+        sync: false
+      - key: DISCORD_CHANNEL_ID
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
