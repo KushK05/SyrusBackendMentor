@@ -9,12 +9,16 @@ import {
 } from "discord.js";
 import express from "express";
 import path from "path";
+import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
 import rateLimit from "express-rate-limit";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Load env from backend/.env, then fallback to project root .env
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
-dotenv.config({ path: path.resolve(process.cwd(), "..", ".env") });
+dotenv.config({ path: path.join(__dirname, ".env") });
+dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
 const PORT = process.env.PORT || 4000;
 const CHANNEL_ID =
@@ -41,8 +45,8 @@ let botReady = false;
 const REQUESTS = new Map(); // In-memory store; replace with DB in production (stateless ka jarurat nhi lagra)
 
 const mentorRequestLimiter = rateLimit({
-  windowMs: 2 * 60 * 1000, // 2 minutes
-  max: 2, // limit each IP to 2 requests per window (baad me change kar denge )
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 1, // limit each IP to 1 requests per window (baad me change kar denge )
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -66,6 +70,12 @@ const buildDiscordMessage = ({ requestId, teamName, tableNumber, queryCategory, 
   );
 };
 
+const getMentorName = (interaction) => {
+  const memberName = interaction?.member?.nickname || interaction?.member?.displayName;
+  const userName = interaction?.user?.globalName || interaction?.user?.username;
+  return memberName || userName || "Mentor";
+};
+
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isButton()) return;
 
@@ -82,15 +92,22 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   if (request.status === "accepted") {
+    const acceptedName =
+      request.acceptedBy?.name || request.acceptedBy?.tag || "another mentor";
     await interaction.reply({
-      content: `Already accepted by ${request.acceptedBy?.tag || "another mentor"}.`,
+      content: `Already accepted by ${acceptedName}.`,
       ephemeral: true
     });
     return;
   }
 
+  const mentorName = getMentorName(interaction);
   request.status = "accepted";
-  request.acceptedBy = { id: interaction.user.id, tag: interaction.user.tag };
+  request.acceptedBy = {
+    id: interaction.user.id,
+    tag: interaction.user.tag,
+    name: mentorName
+  };
   request.acceptedAt = new Date().toISOString();
   REQUESTS.set(requestId, request);
 
@@ -104,7 +121,7 @@ client.on("interactionCreate", async (interaction) => {
 
   try {
     await interaction.update({
-      content: `${request.messageContent}\n\n✅ Accepted by <@${interaction.user.id}>`,
+      content: `${request.messageContent}\n\n✅ Accepted by ${mentorName}`,
       components: [disabledRow]
     });
     await interaction.followUp({
@@ -220,12 +237,7 @@ if (!process.env.DISCORD_BOT_TOKEN) {
     .catch((err) => console.error("Failed to login to Discord", err));
 }
 
-// Export app for serverless (e.g., Vercel). Only listen when running long-lived server.
-const isServerless = !!process.env.VERCEL;
-if (!isServerless) {
-  app.listen(PORT, () => {
-    console.log(`Backend listening on http://localhost:${PORT}`);
-  });
-}
+
+app.listen(4000);
 
 export default app;
