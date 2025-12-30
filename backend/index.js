@@ -45,8 +45,8 @@ let botReady = false;
 const REQUESTS = new Map(); // In-memory store; replace with DB in production (stateless ka jarurat nhi lagra)
 
 const mentorRequestLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 10, // limit each IP to 1 requests per window (baad me change kar denge )
+  windowMs: 2 * 60 * 1000, // 2 minutes
+  max: 1, // limit each IP to 1 requests per window
   standardHeaders: true,
   legacyHeaders: false,
   message: {
