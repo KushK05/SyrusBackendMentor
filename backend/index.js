@@ -50,7 +50,7 @@ const mentorRequestLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: {
-    message: "Too many mentor requests. Please wait a moment and try again."
+    message: "Only 1 request per 2 minutes is allowed!"
   }
 });
 
