@@ -11,7 +11,6 @@ import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import { v4 as uuidv4 } from "uuid";
-import rateLimit from "express-rate-limit";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,16 +42,6 @@ const client = new Client({
 
 let botReady = false;
 const REQUESTS = new Map(); // In-memory store; replace with DB in production (stateless ka jarurat nhi lagra)
-
-const mentorRequestLimiter = rateLimit({
-  windowMs: 2 * 60 * 1000, // 2 minutes
-  max: 1, // limit each IP to 1 requests per window
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    message: "Only 1 request per 2 minutes is allowed!"
-  }
-});
 
 client.once("ready", () => {
   botReady = true;
@@ -146,7 +135,7 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true, botReady });
 });
 
-app.post("/api/mentor-requests", mentorRequestLimiter, async (req, res) => {
+app.post("/api/mentor-requests", async (req, res) => {
   const { teamName, tableNumber, queryCategory, details = "" } = req.body || {};
 
   if (!teamName || !tableNumber || !queryCategory) {
